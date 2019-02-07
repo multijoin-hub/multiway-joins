@@ -10,6 +10,6 @@ params = {
             ('nation_aligned', 'customer_aligned'),
             ('customer_aligned', 'order_aligned'),
             ('order_aligned', 'lineitem_aligned'),
-            ('supplier_aligned', '')
-        }
+            ('supplier_aligned', 'partsupp_aligned'),
+    }
 }
