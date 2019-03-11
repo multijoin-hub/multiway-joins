@@ -4,7 +4,7 @@ use_mode : 'perform_joins'
 database_name : 'tpch_4g'
 
 tables_metadata : 
-  table1: 
+  - table1:
     name : region
     pk: R_REGIONKEY
     fk: None 
@@ -12,7 +12,7 @@ tables_metadata :
     cja: R_REGIONSID
     r_to: nation_aligned
     r_from: None
-  table2: 
+  - table2:
     name : nation_aligned
     pk: N_NATIONKEY
     fk: N_REGIONKEY 
@@ -20,7 +20,7 @@ tables_metadata :
     cja: N_NATIONSID
     r_to: customer_aligned, supplier_aligned
     r_from: region
-  table3: 
+  - table3:
     name : customer_aligned
     pk: C_CUSTKEY
     fk: C_NATIONKEY 
@@ -28,7 +28,7 @@ tables_metadata :
     cja: C_CUSTOMERSID
     r_to: orders_aligned
     r_from: None
-  table4: 
+  - table4:
     name : orders_aligned
     pk: O_ORDERKEY
     fk: O_CUSTKEY 
@@ -36,7 +36,7 @@ tables_metadata :
     cja: O_ORDERSID
     r_to: lineitem_aligned
     r_from: customer_aligned
-  table5: 
+  - table5:
     name : 
     pk: R_REGIONKEY
     fk: None 
@@ -44,7 +44,7 @@ tables_metadata :
     cja: R_REGIONSID
     r_to: nation_aligned
     r_from: None
-  table6: 
+  - table6:
     name : 
     pk: N_NATIONKEY
     fk: N_REGIONKEY 

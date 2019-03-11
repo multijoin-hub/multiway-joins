@@ -1,6 +1,7 @@
 import argparse
 from defaults import params
 import os
+from utils import parse_yaml
 def process_cmd_args():
     """
         Process the command line arguments and write 
@@ -27,9 +28,21 @@ def process_cmd_args():
     if args.verbose >= 3:
         print("Verbosity level 3")
     
-    print("The configuration file is {}".format(args.cofig_file))
-
-def def_initial_config(config_file="config.yaml"):
+    print("The configuration file is {}".format(args.config_file))
     return
+
+def def_initial_config(config_file="./config.yaml"):
+    """
+    Process the config file and generate run configuration
+    :param config_file: the path to the configuration file
+    :return: None
+    """
+    initial_config = parse_yaml(os.path.abspath(config_file))
+    for tables in initial_config['tables_metadata']:
+        print(tables['name'])
+    return
+
+
 if __name__=="__main__":
     process_cmd_args()
+    def_initial_config()
