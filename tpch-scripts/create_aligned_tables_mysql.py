@@ -14,6 +14,7 @@ from mysql.connector import Error
 import logging
 import glob
 from copy import copy
+import time
 
 
 class AlignedRelationsCreator(object):
@@ -41,6 +42,9 @@ class AlignedRelationsCreator(object):
         Notes:
             -- TODO: Implement Force = False
         """
+        self.host = mysql_host
+        self.username = username
+        self.password = password
         self.data_dir = data_dir
         self.logger = logging.getLogger(self.__class__.__name__)
         c_handler = logging.StreamHandler()
@@ -64,8 +68,9 @@ class AlignedRelationsCreator(object):
                                                 host=mysql_host,
                                                 user=username,
                                                 password=password,
-                                                allow_local_infile=True
-                                            )
+                                                get_warnings=True,
+                                                connection_timeout=70000,
+                                                allow_local_infile=True)
             self.cursor = self.conn.cursor()
 
             if self.cursor:
@@ -90,9 +95,7 @@ class AlignedRelationsCreator(object):
             self.logger.info(
                 "Created following schema in server:{}".format(self.schema_name))
             # Change to current db
-            self.conn.database = self.schema_name
-            self.cursor = self.conn.cursor()
-            self.logger.info("Database Changed to {}".format(self.schema_name))
+            self._reset_cursor()
         except Error as e:
             self.logger.exception("Error Creating Schema")
         for query in open('./create_tpch_schema.sql', 'r'):
@@ -100,57 +103,91 @@ class AlignedRelationsCreator(object):
                 _ = self.cursor.execute(query)
             except:
                 self.logger.exception("Error Creating tables")
-
-        for alter_query in open('assign_pk_fk.sql', 'r'):
-            # Add a Try Catch Block Later
-            self.cursor.execute(alter_query)
-            self.logger.debug('MySQL Query: {}'.format(alter_query))
-        self.cursor.execute("SHOW TABLES;")
-        table_names = self.cursor.fetchall()
-        self.logger.info("Finished Creating Tables {}".format(table_names))
         return
 
-    def _perform_infile_operations(self):
+    def _reset_cursor(self):
+        """Reset Cursor To point to current schema"""
+        self.cursor.close()
+        self.conn.close()
+        try:
+            self.conn = mysql.connector.connect(
+                                                host=self.host,
+                                                user=self.username,
+                                                password=self.password,
+                                                allow_local_infile=True,
+                                                get_warnings=True,
+                                                connection_timeout=700000,
+                                                database=self.schema_name)
+            self.cursor = self.conn.cursor()
+            self.conn.allow_local_infile = True
+            if self.cursor:
+                self.logger.info(
+                    "Reset the connection to {}".format(self.schema_name))
+        except Error as e:
+            self.logger.exception("Error Connecting to server")
+
+
+    def _infile_op_pk_fk(self):
         """Perform infile operations to load the dataset"""
         self.conn.allow_local_infile = True  # Sanity
         self.cursor = self.conn.cursor()
 
         tbl_files = glob.glob(self.data_dir+"/*.tbl")
         tbl_names = [(tbl_file.split("/")[-1].replace(".tbl", "")).upper() for tbl_file in copy(tbl_files)]
-
+        infile_query = """LOAD DATA LOCAL INFILE '{0}' INTO TABLE `{1}` FIELDS TERMINATED BY '|';"""
+        
         for tbl_file, tbl_name in zip(tbl_files, tbl_names):
-            infile_query = "LOAD DATA LOCAL INFILE '<-->' INTO TABLE <<---->> FIELDS  TERMINATED BY '|';"
-            infile_query = infile_query.replace("<-->", tbl_file)
-            infile_query = infile_query.replace("<<---->>", tbl_name)
             try:
-                self.cursor.execute(infile_query)
+                self._reset_cursor()
+                self.cursor.execute(infile_query.format(tbl_file, tbl_name))
+                time.sleep(1)
+                self.conn.commit()
             except Error as e:
                 self.logger.exception("Error Performing Infile Query")
-            self.logger.debug("MySQL Query: {}".format(infile_query))
+            self.logger.debug("MySQL Query: {}".format(infile_query.format(tbl_file, tbl_name)))
             self.logger.debug("Loaded File {} into table {}".format(tbl_file, tbl_name))
         # Commit the transaction
-        self.conn.commit()
+        # self.conn.commit()
         self.logger.info("Finished loading all tables from {}".format(self.data_dir))
+
+        for alter_query in open('assign_pk_fk.sql', 'r'):
+            # Add a Try Catch Block Later
+            self.logger.debug('MySQL Query: {}'.format(alter_query))
+            self.cursor.execute(alter_query)
+            self.conn.commit()
+            time.sleep(1)
+
+        self.cursor.execute("SHOW TABLES;")
+        table_names = self.cursor.fetchall()
+        self.logger.info("Finished Creating Tables {}".format(table_names))
+        self._reset_cursor()
+
 
     def _create_aligned_relations(self, num_branches=1):
         """Create Relationships Defined in the paper
             TODO: Implement num_branches = 2
         """
-        TABLE_NAMES = ['REGIONS_ALIGNED', 'NATION_ALIGNED', 'CUSTOMER_ALIGNED',
-                        'SUPPLIER_ALIGNED', 'PARTSUPP_ALIGNED', 'ORDER_ALIGNED'
-                        'LINEITEM_ALIGNED']
-        SIDS = ['R_REGIONSID', 'N_REGIONSID', 'N_NATIONSID', ]
-        TABLES = ['REGION', 'NATION', 'CUSTOMER', 'SUPPLIER', 'PARTSUPP', 'ORDER', 'LINITEM']
-
-        hybrid = [(old, new) for old, new in zip(TABLE_NAMES, TABLES)]
-        print(hybrid)
-        
+        self.logger.info("Started Creating Aligned Relationships")
+        if num_branches == 1:
+            for query in open('./aligned_relation_queries.sql', 'r'):
+                try:
+                    self.logger.debug('MySQL Query: {}'.format(query))
+                    self.cursor.execute(query)
+                except:           
+                    self.logger.exception("Error Creating Aligned Relationships")
+            self.conn.commit()
+        else:
+            return
 
     def operate(self):
         """Create Aligned Relations"""
         self._create_basic_relationship()
-        self._perform_infile_operations()
-        # self._create_aligned_relations()
+        # self._reset_cursor()
+        self._infile_op_pk_fk()
+        self._reset_cursor()
+        self._create_aligned_relations()
+        # self.conn.commit()
+        self.conn.close()
 
 
 def parse_args():

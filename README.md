@@ -24,6 +24,7 @@ First make sure you have the MYSQL server running in localhost. Create a new use
 ```bash
     mysql> CREATE USER 'tpch'@'localhost' IDENTIFIED BY 'tpch';
     mysql> GRANT ALL PRIVILEGES ON * . * TO 'tpch'@'localhost';
+    mysql> GRANT FILE ON *.* TO 'tpch'@'localhost';
 ```
 
 3. Use the the following script to load all the tables in the database and Create Aligned Relations
@@ -48,4 +49,9 @@ optional arguments:
   --branches BRANCHES, -b BRANCHES
                         Number of Branches To Create
 ```
-
+4. If you want to generate all the schemas for 100MB, 1GB, 3GB, 4GB, 5GB and 10GB worth of data. We have a script handy fo you.
+```
+cd tpch-scripts
+chmod +x generate_aligned_tables.sh
+./generate_aligned_tables.sh
+```
