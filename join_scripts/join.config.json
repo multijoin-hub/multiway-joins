@@ -1,0 +1,74 @@
+{
+    "server": "MYSQL",
+    "host": "localhost",
+    "connector_engine": "sqlalchemy",
+    "username": "tpch",
+    "password": "tpch",
+    "database": "TPCH0_1GB",
+    "port": 3306,
+    "tables": [
+        {
+            "name" : "REGION",
+            "orderby": "R_REGIONSID",
+            "parent": null,
+            "child_list": ["NATION_ALIGNED"],
+            "sids": [-1, 1],
+            "parent_idx" : -1,
+            "child_list_idx": [1]
+        },
+        {
+            "name" : "NATION_ALIGNED",
+            "orderby": "N_NATIONSID",
+            "parent": ["REGION"],
+            "child_list": ["CUSTOMER_ALIGNED", "SUPPLIER_ALIGNED"],
+            "sids": [-1, 1], 
+            "parent_idx" : 0,
+            "child_list_idx": [2, 5]
+        },
+        {
+            "name": "CUSTOMER_ALIGNED",
+            "orderby": "C_CUSTSID",
+            "parent":  ["NATION_ALIGNED"],
+            "child_list": ["ORDERS_ALIGNED"],
+            "sids": [-1, 1],
+            "parent_idx" : 1,
+            "child_list_idx": [3]
+        },
+        {
+            "name": "ORDERS_ALIGNED",
+            "orderby": "O_ORDERSID",
+            "parent":  ["CUSTOMER_ALIGNED"],
+            "child_list": ["LINEITEM_ALIGNED"],
+            "sids": [-1, 1],
+            "parent_idx" : 2,
+            "child_list_idx": [4]
+        },
+        {
+            "name": "LINEITEM_ALIGNED",
+            "orderby": "L_ORDERSID",
+            "parent":  ["ORDERS_ALIGNED"],
+            "child_list": null,
+            "sids": [-1, 1],
+            "parent_idx" : 3,
+            "child_list_idx": [-1]
+        },
+        {
+            "name": "SUPPLIER_ALIGNED",
+            "orderby": "S_SUPPSID",
+            "parent": ["NATION_ALIGNED"],
+            "child_list": ["PARTSUPP_ALIGNED"],
+            "sids": [-1, 1],
+            "parent_idx" : 1,
+            "child_list_idx": [6]
+        },
+        {
+            "name": "PARTSUPP_ALIGNED",
+            "orderby": "PS_SUPPSID",
+            "parent": ["SUPPLIER_ALIGNED"],
+            "child_list": [],
+            "sids": [-1, 1],
+            "parent_idx" : 5,
+            "child_list_idx": [-1]
+        }
+    ]
+}
