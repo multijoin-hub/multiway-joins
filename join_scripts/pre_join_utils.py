@@ -66,7 +66,7 @@ class MySQLRelationTree():
         return nodes_arr[0]
 
     def connect_and_return_node_arr(self):
-        """Connect and Return root tree 
+        """Connect and Return node array""" 
         nodes_arr = self._connect_and_return_root_helper()
         return nodes_arr
 
