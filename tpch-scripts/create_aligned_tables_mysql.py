@@ -212,6 +212,6 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     # print(args)
-    al_rel_creator = AlignedRelationsCreator()
+    al_rel_creator = AlignedRelationsCreator(data_dir=args.data_dir)
     # al_rel_creator.create_basic_relationship()
     al_rel_creator.operate()
